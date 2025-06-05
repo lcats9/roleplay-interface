@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Roleplay with Integrated Coach</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+        }
+        
+        .api-setup {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4299e1;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        button.recording {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .speech-indicator {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: 500;
+            color: #856404;
+        }
+        
+        .chat-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .user-message {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .claude-message {
+            background: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .status.success { background: #d4e6f1; color: #1565c0; }
+        .status.error { background: #ffebee; color: #c62828; }
+        .status.info { background: #e8f5e8; color: #2e7d32; }
+        
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        audio {
+            flex: 1;
+            max-width: 300px;
+        }
+        
+        .netlify-info {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #2e7d32;
+        }
+        
+        .demo-mode {
+            background: #e1f5fe;
+            border: 1px solid #0288d1;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .voice-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .voice-option {
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s;
+            font-size: 12px;
+        }
+        
+        .voice-option:hover {
+            background: #e0e0e0;
+        }
+        
+        .voice-option.selected {
+            background: #4299e1;
+            color: white;
+        }
+        
+        .voice-option.coach-selected {
+            background: #9f7aea;
+            color: white;
+        }
+        
+        .microphone-help {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            color: #c62828;
+        }
+        
+        .api-help {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            color: #856404;
+        }
+        
+        .voice-section {
+            background: #f8f9ff;
+            border: 1px solid #d0d0ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .connection-status {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+        
+        .status-indicator.connected {
+            background: #4caf50;
+            animation: pulse-green 2s infinite;
+        }
+        
+        .status-indicator.error {
+            background: #f44336;
+        }
+        
+        @keyframes pulse-green {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .coach-instruction {
+            background: #fff9e6;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            color: #8b5000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Claude Roleplay with Integrated Coach</h1>
+        
+        <div class="netlify-info">
+            <h3>✅ Netlify Serverless Functions - No More Proxy Issues!</h3>
+            <p>Direct server-side API calls eliminate proxy failures and rate limits.</p>
+        </div>
+        
+        <div class="connection-status">
+            <div class="status-indicator" id="netlifyStatus"></div>
+            <span>Netlify Functions</span>
+            <div class="status-indicator" id="claudeStatus"></div>
+            <span>Claude API</span>
+            <div class="status-indicator" id="elevenStatus"></div>
+            <span>ElevenLabs API</span>
+        </div>
+        
+        <div class="demo-mode" id="demoInfo">
+            <h3>🎯 Demo Mode Available</h3>
+            <p>Toggle below to test with mock responses or use real APIs via Netlify Functions.</p>
+            <label>
+                <input type="checkbox" id="demoMode" checked> Demo Mode (uncheck to use real APIs)
+            </label>
+        </div>
+        
+        <div class="api-help">
+            <h3>📋 API Key Instructions</h3>
+            <p><strong>Claude API:</strong> Get your key from <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys</p>
+            <p><strong>ElevenLabs API:</strong> Get your key from <a href="https://elevenlabs.io/app/speech-synthesis" target="_blank">elevenlabs.io</a> → Profile → API Keys</p>
+            <p><em>Keys are sent securely to Netlify Functions and never stored.</em></p>
+        </div>
+        
+        <div class="microphone-help" id="microphoneHelp" style="display: none;">
+            <h3>🎤 Microphone Permission Help</h3>
+            <p><strong>If speech recognition isn't working:</strong></p>
+            <ol>
+                <li><strong>HTTPS Required:</strong> Make sure you're accessing via HTTPS (Netlify provides this automatically)</li>
+                <li><strong>Chrome/Edge:</strong> Click the 🔒 or 🎤 icon in the address bar → Allow microphone</li>
+                <li><strong>Safari:</strong> Safari menu → Settings for this website → Microphone → Allow</li>
+                <li><strong>Manual check:</strong> <button onclick="checkMicrophonePermission()" style="display: inline; padding: 5px 10px; margin: 0;">Test Microphone Access</button></li>
+            </ol>
+        </div>
+        
+        <div class="api-setup" id="apiSetup">
+            <h3>API Configuration</h3>
+            <div class="input-group">
+                <label for="claudeKey">Claude API Key:</label>
+                <input type="password" id="claudeKey" placeholder="sk-ant-... (get from console.anthropic.com)">
+            </div>
+            <div class="input-group">
+                <label for="elevenKey">ElevenLabs API Key:</label>
+                <input type="password" id="elevenKey" placeholder="Get from elevenlabs.io/app/speech-synthesis">
+            </div>
+            
+            <div class="voice-section">
+                <h4>🎯 Character Voice Selection:</h4>
+                <label>Character Voice (for roleplay scenarios):</label>
+                <div class="voice-selector" id="characterVoices">
+                    <div class="voice-option selected" data-voice="pNInz6obpgDQGcFmaJgB">Adam</div>
+                    <div class="voice-option" data-voice="21m00Tcm4TlvDq8ikWAM">Rachel</div>
+                    <div class="voice-option" data-voice="AZnzlk1XvdvUeBnXmlld">Domi</div>
+                    <div class="voice-option" data-voice="EXAVITQu4vr4xnSDxMaL">Bella</div>
+                    <div class="voice-option" data-voice="ErXwobaYiN019PkySvjV">Antoni</div>
+                    <div class="voice-option" data-voice="MF3mGyEYCl7XYWbV9V6O">Elli</div>
+                </div>
+                <input type="text" id="customCharacterVoice" placeholder="Or enter custom Character Voice ID" style="margin-top: 10px;">
+            </div>
+            
+            <div class="voice-section">
+                <h4>🎓 Coach Voice Selection:</h4>
+                <label>Coach Voice (detected automatically in responses):</label>
+                <div class="voice-selector" id="coachVoices">
+                    <div class="voice-option coach-selected" data-voice="21m00Tcm4TlvDq8ikWAM">Rachel</div>
+                    <div class="voice-option" data-voice="pNInz6obpgDQGcFmaJgB">Adam</div>
+                    <div class="voice-option" data-voice="AZnzlk1XvdvUeBnXmlld">Domi</div>
+                    <div class="voice-option" data-voice="EXAVITQu4vr4xnSDxMaL">Bella</div>
+                    <div class="voice-option" data-voice="ErXwobaYiN019PkySvjV">Antoni</div>
+                    <div class="voice-option" data-voice="MF3mGyEYCl7XYWbV9V6O">Elli</div>
+                </div>
+                <input type="text" id="customCoachVoice" placeholder="Or enter custom Coach Voice ID" style="margin-top: 10px;">
+            </div>
+        </div>
+        
+        <div class="coach-instruction">
+            <h4>🎓 How the Integrated Coach Works:</h4>
+            <p>Claude will naturally step in as a coach during the roleplay when appropriate. The system automatically detects when Claude is speaking as the coach vs. the character and switches voices accordingly.</p>
+        </div>
+        
+        <div class="input-group">
+            <label for="scenario">Roleplay Scenario & Coach Instructions:</label>
+            <textarea id="scenario" rows="4" placeholder="e.g., 'You are a friendly wizard helping me on a quest. You also act as a coach who steps in periodically to give me guidance on my roleplay choices and help me improve my storytelling skills. When coaching, clearly indicate you are stepping out of character.'"></textarea>
+        </div>
+        
+        <div class="input-group">
+            <label for="userInput">Your Message:</label>
+            <textarea id="userInput" rows="2" placeholder="Type your message here..."></textarea>
+        </div>
+        
+        <div class="controls">
+            <button onclick="sendMessage()">Send & Speak</button>
+            <button onclick="toggleSpeechRecognition()" id="speechBtn">🎤 Start Speaking</button>
+            <button onclick="stopAudio()">Stop Audio</button>
+            <button onclick="clearChat()">Clear Chat</button>
+            <button onclick="testConnection()">Test Connection</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div id="speechIndicator" class="speech-indicator" style="display: none;">
+            🎤 Listening... Speak now, then click "Stop Speaking" when done.
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <p style="text-align: center; color: #666;">Set up your scenario with coach instructions, then start chatting!</p>
+        </div>
+        
+        <div class="audio-controls" id="audioControls" style="display: none;">
+            <audio controls id="audioPlayer"></audio>
+        </div>
+    </div>
+
+    <script>
+        let currentAudio = null;
+        let conversationHistory = [];
+        let recognition = null;
+        let isRecording = false;
+        let selectedCharacterVoice = 'pNInz6obpgDQGcFmaJgB';
+        let selectedCoachVoice = '21m00Tcm4TlvDq8ikWAM';
+        let isDemoMode = true;
+
+        function updateStatusIndicator(element, status) {
+            if (element) {
+                element.className = `status-indicator ${status}`;
+            }
+        }
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            if (status) {
+                status.className = `status ${type}`;
+                status.textContent = message;
+                setTimeout(() => status.textContent = '', 10000);
+            }
+        }
+
+        function addMessage(content, isUser = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            if (!chatContainer) return;
+            
+            const messageDiv = document.createElement('div');
+            const messageClass = isUser ? 'user-message' : 'claude-message';
+            const speaker = isUser ? 'You' : 'Claude';
+            
+            messageDiv.className = `message ${messageClass}`;
+            messageDiv.innerHTML = `<strong>${speaker}:</strong> ${content}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function detectCoachSpeaking(text) {
+            const coachIndicators = [
+                '**coach**',
+                '**coach mode**',
+                '*stepping out of character*',
+                '*as your coach*',
+                '*coach here*',
+                '[coach]',
+                '(coach)',
+                'coaching moment:',
+                'coach perspective:',
+                'from a coaching standpoint'
+            ];
+            
+            const lowerText = text.toLowerCase();
+            return coachIndicators.some(indicator => lowerText.includes(indicator));
+        }
+
+        function splitCoachAndCharacterSpeech(text) {
+            const sentences = text.split(/[.!?]+/);
+            const parts = [];
+            let currentSection = { type: 'character', content: '' };
+            
+            for (let sentence of sentences) {
+                if (!sentence.trim()) continue;
+                
+                const isCoachSentence = detectCoachSpeaking(sentence);
+                
+                if (isCoachSentence && currentSection.type === 'character') {
+                    if (currentSection.content.trim()) {
+                        parts.push(currentSection);
+                    }
+                    currentSection = { type: 'coach', content: sentence.trim() + '.' };
+                } else if (!isCoachSentence && currentSection.type === 'coach') {
+                    if (currentSection.content.trim()) {
+                        parts.push(currentSection);
+                    }
+                    currentSection = { type: 'character', content: sentence.trim() + '.' };
+                } else {
+                    if (currentSection.content) {
+                        currentSection.content += ' ' + sentence.trim() + '.';
+                    } else {
+                        currentSection.content = sentence.trim() + '.';
+                    }
+                }
+            }
+            
+            if (currentSection.content.trim()) {
+                parts.push(currentSection);
+            }
+            
+            return parts.length > 0 ? parts : [{ type: 'character', content: text }];
+        }
+
+        function initializeSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                return false;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            
+            recognition.onstart = function() {
+                const speechIndicator = document.getElementById('speechIndicator');
+                if (speechIndicator) {
+                    speechIndicator.textContent = '🎤 Listening... Speak now!';
+                    speechIndicator.style.display = 'block';
+                }
+                showStatus('🎤 Listening for your voice...', 'success');
+            };
+            
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                if (interimTranscript) {
+                    const speechIndicator = document.getElementById('speechIndicator');
+                    if (speechIndicator) {
+                        speechIndicator.textContent = `🎤 Hearing: "${interimTranscript}"`;
+                    }
+                }
+                
+                if (finalTranscript) {
+                    const userInput = document.getElementById('userInput');
+                    if (userInput) {
+                        const currentText = userInput.value;
+                        userInput.value = currentText + finalTranscript + ' ';
+                        showStatus(`✅ Added: "${finalTranscript}"`, 'success');
+                    }
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                let errorMessage = 'Speech recognition error: ';
+                switch(event.error) {
+                    case 'not-allowed':
+                        errorMessage += 'Microphone permission denied.';
+                        const microphoneHelp = document.getElementById('microphoneHelp');
+                        if (microphoneHelp) {
+                            microphoneHelp.style.display = 'block';
+                        }
+                        break;
+                    case 'no-speech':
+                        errorMessage += 'No speech detected.';
+                        break;
+                    default:
+                        errorMessage += event.error;
+                }
+                showStatus(errorMessage, 'error');
+                stopSpeechRecognition();
+            };
+            
+            recognition.onend = function() {
+                if (isRecording) {
+                    stopSpeechRecognition();
+                }
+            };
+            
+            return true;
+        }
+
+        async function toggleSpeechRecognition() {
+            if (!recognition) {
+                showStatus('Speech recognition not supported. Try Chrome, Edge, or Safari.', 'error');
+                return;
+            }
+            
+            if (isRecording) {
+                stopSpeechRecognition();
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    startSpeechRecognition();
+                } catch (error) {
+                    if (error.name === 'NotAllowedError') {
+                        showStatus('❌ Microphone access denied. Please allow microphone access.', 'error');
+                        const microphoneHelp = document.getElementById('microphoneHelp');
+                        if (microphoneHelp) {
+                            microphoneHelp.style.display = 'block';
+                        }
+                    } else {
+                        showStatus(`❌ Microphone error: ${error.message}`, 'error');
+                    }
+                }
+            }
+        }
+        
+        function startSpeechRecognition() {
+            isRecording = true;
+            const speechBtn = document.getElementById('speechBtn');
+            const speechIndicator = document.getElementById('speechIndicator');
+            
+            if (speechBtn) {
+                speechBtn.textContent = '🛑 Stop Speaking';
+                speechBtn.classList.add('recording');
+            }
+            
+            if (speechIndicator) {
+                speechIndicator.style.display = 'block';
+                speechIndicator.textContent = '🎤 Starting microphone...';
+            }
+            
+            try {
+                recognition.start();
+                showStatus('🎤 Starting speech recognition...', 'info');
+            } catch (error) {
+                showStatus(`Failed to start speech recognition: ${error.message}`, 'error');
+                stopSpeechRecognition();
+            }
+        }
+        
+        function stopSpeechRecognition() {
+            isRecording = false;
+            const speechBtn = document.getElementById('speechBtn');
+            const speechIndicator = document.getElementById('speechIndicator');
+            
+            if (speechBtn) {
+                speechBtn.textContent = '🎤 Start Speaking';
+                speechBtn.classList.remove('recording');
+            }
+            
+            if (speechIndicator) {
+                speechIndicator.style.display = 'none';
+            }
+            
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    console.error('Error stopping recognition:', error);
+                }
+            }
+            showStatus('Stopped listening', 'info');
+        }
+
+        async function checkMicrophonePermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                showStatus('✅ Microphone access granted!', 'success');
+                const microphoneHelp = document.getElementById('microphoneHelp');
+                if (microphoneHelp) {
+                    microphoneHelp.style.display = 'none';
+                }
+                const speechBtn = document.getElementById('speechBtn');
+                if (speechBtn) {
+                    speechBtn.disabled = false;
+                }
+            } catch (error) {
+                showStatus(`❌ Microphone error: ${error.message}`, 'error');
+            }
+        }
+
+        async function makeClaudeRequest(userMessage, systemPrompt) {
+            if (isDemoMode) {
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Get the scenario content to parse instructions
+                const scenarioContent = document.getElementById('scenario').value.trim();
+                
+                if (!scenarioContent) {
+                    return "Please enter your roleplay scenario and coach instructions in the text box above first!";
+                }
+                
+                // Parse the scenario content for specific instructions
+                const lowerScenario = scenarioContent.toLowerCase();
+                
+                // Check if this follows the Taylor/Kit pattern from your example
+                if (lowerScenario.includes('taylor') && lowerScenario.includes('kit')) {
+                    return handleTaylorKitDemo(userMessage, scenarioContent);
+                }
+                
+                // For other scenarios, provide a generic coach-integrated response
+                if (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('hi')) {
+                    return generateGenericRoleplayStart(scenarioContent);
+                }
+                
+                // Default coach intervention for any scenario
+                if (Math.random() > 0.6) { // 40% chance of coach intervention
+                    return `I understand what you're saying. Let me continue in character... 
+
+**Coach:** I'm stepping in here briefly. This is a great moment to practice the skills we've discussed. Notice how the conversation is developing - this is exactly the kind of situation where you can apply new techniques. Ready to continue?`;
+                }
+                
+                return generateCharacterResponse(scenarioContent, userMessage);
+            }
+
+            // Real API call via Netlify Functions
+            const claudeKey = document.getElementById('claudeKey').value;
+            if (!claudeKey) {
+                throw new Error('Claude API key is required');
+            }
+
+            const fullSystemPrompt = systemPrompt + "\n\nScenario and Instructions:\n" + document.getElementById('scenario').value;
+
+            const requestData = {
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 1000,
+                system: fullSystemPrompt,
+                messages: [...conversationHistory, { role: "user", content: userMessage }],
+                apiKey: claudeKey
+            };
+
+            const response = await fetch('/.netlify/functions/claude-chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Claude API error ${response.status}: ${errorText.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+            return data.content[0].text;
+        }
+
+        function handleTaylorKitDemo(userMessage, scenarioContent) {
+            // Track conversation state in a simple way
+            if (!window.demoState) {
+                window.demoState = { step: 0, hasGreeted: false };
+            }
+            
+            const lowerMessage = userMessage.toLowerCase();
+            
+            // First greeting
+            if ((lowerMessage.includes('hi taylor') || lowerMessage.includes('hello taylor')) && !window.demoState.hasGreeted) {
+                window.demoState.hasGreeted = true;
+                window.demoState.step = 1;
+                return "Hi Kit, how's that roomie situation going? Probably different than mine.";
+            }
+            
+            // Escalation responses
+            if (window.demoState.step >= 1 && window.demoState.step <= 3) {
+                window.demoState.step++;
+                
+                const escalationResponses = [
+                    "What's that supposed to mean? Are you saying there's something wrong with my situation? That's pretty judgmental coming from you, Kit.",
+                    "You know what? I'm getting really tired of your attitude. You always act like you've got everything figured out and everyone else is just a mess.",
+                    "Seriously? You're going to stand there and act innocent now? I thought we were friends but apparently you think you're better than me."
+                ];
+                
+                return escalationResponses[window.demoState.step - 2] || escalationResponses[2];
+            }
+            
+            // Coach intervention trigger
+            if (window.demoState.step === 4) {
+                window.demoState.step = 5;
+                return `**Coach:** Kit, I'm stepping in here. I can see this conversation has escalated quite a bit. This is exactly the kind of situation where we can practice better approaches. Based on what just happened, I'd like you to watch a brief video about handling difficult conversations. Are you ready to watch? Here's the link: [Video Coach](https://www.youtube.com/watch?v=dQw4w9WgXcQ). Click it and then say 'ready' when you return.`;
+            }
+            
+            // Post-video responses
+            if (window.demoState.step >= 5) {
+                if (lowerMessage.includes('ready')) {
+                    window.demoState.step = 6;
+                    return "**Coach:** Excellent! Now that you've seen Lesson 1, we'll move to Playthrough #2 where you can practice these new skills in a different scenario.";
+                } else {
+                    return "**Coach:** Please watch the video first, then come back and say 'ready' to continue.";
+                }
+            }
+            
+            return "Hi Kit, how's that roomie situation going? Probably different than mine.";
+        }
+
+        function generateGenericRoleplayStart(scenarioContent) {
+            // Extract character type from scenario
+            if (scenarioContent.toLowerCase().includes('wizard')) {
+                return "Greetings, traveler! I am the wizard you seek. I sense great potential in you. **Coach:** Notice how I'm establishing the character and setting right away - this creates immersion. Ready to begin your quest?";
+            } else if (scenarioContent.toLowerCase().includes('teacher')) {
+                return "Welcome to class! Please take a seat. Today we'll be exploring something fascinating. **Coach:** Good roleplay starts with clear character establishment. See how I'm setting the scene?";
+            } else {
+                return "Hello! I'm ready to begin our roleplay scenario. **Coach:** I'm here as your integrated coach - I'll step in naturally to provide guidance as we go. Let's start!";
+            }
+        }
+
+        function generateCharacterResponse(scenarioContent, userMessage) {
+            // Simple response generation based on scenario content
+            const responses = [
+                "That's interesting. Tell me more about that.",
+                "I see. What would you like to do next?",
+                "Fascinating! How do you think we should proceed?",
+                "**Coach:** This is a good moment to practice active listening. Notice how the character is engaging with your ideas."
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        async function makeElevenLabsRequest(text, isCoach = false) {
+            if (isDemoMode) {
+                // Create different demo audio for coach vs character
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const duration = 0.5;
+                const sampleRate = audioContext.sampleRate;
+                const frameCount = duration * sampleRate;
+                
+                const audioBuffer = audioContext.createBuffer(1, frameCount, sampleRate);
+                const channelData = audioBuffer.getChannelData(0);
+                
+                // Generate different tones for coach vs character
+                const frequency = isCoach ? 660 : 440;
+                for (let i = 0; i < frameCount; i++) {
+                    channelData[i] = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.1 * Math.exp(-i / frameCount * 3);
+                }
+                
+                // Convert to blob (simplified)
+                return new Blob([new ArrayBuffer(1024)], { type: 'audio/mpeg' });
+            }
+
+            // Real API call via Netlify Functions
+            const elevenKey = document.getElementById('elevenKey').value;
+            if (!elevenKey) {
+                throw new Error('ElevenLabs API key is required');
+            }
+            
+            // Choose voice based on coach detection
+            let voiceId;
+            if (isCoach) {
+                const customCoachVoice = document.getElementById('customCoachVoice').value;
+                voiceId = customCoachVoice || selectedCoachVoice;
+            } else {
+                const customCharacterVoice = document.getElementById('customCharacterVoice').value;
+                voiceId = customCharacterVoice || selectedCharacterVoice;
+            }
+            
+            const requestData = {
+                text: text,
+                voiceId: voiceId,
+                apiKey: elevenKey,
+                voice_settings: {
+                    stability: isCoach ? 0.7 : 0.5,
+                    similarity_boost: isCoach ? 0.8 : 0.75,
+                    style: isCoach ? 0.3 : 0.0,
+                    use_speaker_boost: true
+                }
+            };
+
+            const response = await fetch('/.netlify/functions/elevenlabs-tts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`ElevenLabs API error ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            
+            // Convert base64 back to blob
+            const binaryString = atob(data.audio);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            return new Blob([bytes], { type: data.contentType || 'audio/mpeg' });
+        }
+
+        async function playMultipleVoiceSections(textSections) {
+            const elevenKey = document.getElementById('elevenKey').value;
+            if (!elevenKey && !isDemoMode) {
+                showStatus('✅ Response received! Add ElevenLabs key for speech.', 'success');
+                return;
+            }
+
+            showStatus('Converting to speech with voice switching...', 'info');
+            
+            for (let i = 0; i < textSections.length; i++) {
+                const section = textSections[i];
+                const isCoach = section.type === 'coach';
+                
+                try {
+                    const audioBlob = await makeElevenLabsRequest(section.content, isCoach);
+                    
+                    if (audioBlob) {
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audioPlayer = document.getElementById('audioPlayer');
+                        const audioControls = document.getElementById('audioControls');
+                        
+                        if (audioPlayer && audioControls) {
+                            audioPlayer.src = audioUrl;
+                            audioControls.style.display = 'flex';
+                            currentAudio = audioPlayer;
+                            
+                            // Show which voice is playing
+                            const voiceType = isCoach ? 'coach' : 'character';
+                            showStatus(`🎵 Playing ${voiceType} voice (${i + 1}/${textSections.length})...`, 'success');
+                            
+                            // Play and wait for completion
+                            await new Promise((resolve) => {
+                                audioPlayer.onended = resolve;
+                                audioPlayer.onerror = resolve;
+                                audioPlayer.play().catch(resolve);
+                            });
+                            
+                            // Small pause between sections
+                            if (i < textSections.length - 1) {
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            }
+                        }
+                    }
+                } catch (voiceError) {
+                    showStatus(`Voice synthesis failed for section ${i + 1}: ${voiceError.message}`, 'error');
+                    updateStatusIndicator(document.getElementById('elevenStatus'), 'error');
+                }
+            }
+            
+            showStatus('✅ All voice sections complete!', 'success');
+        }
+
+        async function testConnection() {
+            if (isDemoMode) {
+                showStatus('✅ Demo mode - all systems ready!', 'success');
+                addMessage('Demo mode test: Claude will naturally switch between character and coach voices based on context!');
+                updateStatusIndicator(document.getElementById('claudeStatus'), 'connected');
+                updateStatusIndicator(document.getElementById('elevenStatus'), 'connected');
+                updateStatusIndicator(document.getElementById('netlifyStatus'), 'connected');
+                return;
+            }
+
+            const claudeKey = document.getElementById('claudeKey').value;
+            if (!claudeKey) {
+                showStatus('Please enter Claude API key first', 'error');
+                return;
+            }
+            
+            showStatus('Testing Netlify Functions...', 'info');
+            
+            try {
+                const claudeResponse = await makeClaudeRequest('Hello, respond with just "API test successful"', 'Respond briefly.');
+                
+                if (claudeResponse) {
+                    showStatus('✅ Claude API working via Netlify!', 'success');
+                    addMessage(claudeResponse);
+                    updateStatusIndicator(document.getElementById('claudeStatus'), 'connected');
+                    updateStatusIndicator(document.getElementById('netlifyStatus'), 'connected');
+                }
+                
+                const elevenKey = document.getElementById('elevenKey').value;
+                if (elevenKey) {
+                    try {
+                        const audioBlob = await makeElevenLabsRequest('API test successful', false);
+                        if (audioBlob) {
+                            showStatus('✅ Both APIs working perfectly via Netlify!', 'success');
+                            updateStatusIndicator(document.getElementById('elevenStatus'), 'connected');
+                        }
+                    } catch (voiceError) {
+                        showStatus(`Claude works, but ElevenLabs failed: ${voiceError.message}`, 'error');
+                        updateStatusIndicator(document.getElementById('elevenStatus'), 'error');
+                    }
+                } else {
+                    showStatus('✅ Claude API working! Add ElevenLabs key for voice.', 'success');
+                }
+            } catch (error) {
+                showStatus(`❌ API test failed: ${error.message}`, 'error');
+                updateStatusIndicator(document.getElementById('claudeStatus'), 'error');
+                updateStatusIndicator(document.getElementById('netlifyStatus'), 'error');
+            }
+        }
+
+        async function sendMessage() {
+            if (!isDemoMode) {
+                const claudeKey = document.getElementById('claudeKey').value;
+                if (!claudeKey) {
+                    showStatus('Please enter Claude API key or enable Demo mode', 'error');
+                    return;
+                }
+            }
+
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                showStatus('Please enter a message', 'error');
+                return;
+            }
+
+            const scenario = document.getElementById('scenario').value;
+            showStatus('Sending message...', 'info');
+            addMessage(userInput, true);
+
+            try {
+                const systemPrompt = scenario || "You are engaged in a roleplay conversation. Also act as a coach who occasionally steps in to provide guidance. When coaching, clearly indicate you are stepping out of character by using phrases like '**Coach:**' or '*As your coach:*' or similar clear markers. Keep responses engaging but not too long.";
+                
+                const claudeText = await makeClaudeRequest(userInput, systemPrompt);
+                
+                addMessage(claudeText);
+                
+                // Update conversation history for context (except in demo mode)
+                if (!isDemoMode) {
+                    conversationHistory.push({ role: "user", content: userInput });
+                    conversationHistory.push({ role: "assistant", content: claudeText });
+                    // Keep only last 10 messages to avoid token limits
+                    if (conversationHistory.length > 10) {
+                        conversationHistory = conversationHistory.slice(-10);
+                    }
+                }
+
+                // Split response and play with appropriate voices
+                const textSections = splitCoachAndCharacterSpeech(claudeText);
+                
+                if (textSections.length > 1) {
+                    showStatus(`Detected ${textSections.length} voice sections (coach + character)`, 'info');
+                    await playMultipleVoiceSections(textSections);
+                } else {
+                    // Single voice section
+                    const isCoach = textSections[0].type === 'coach';
+                    const elevenKey = document.getElementById('elevenKey').value;
+                    
+                    if (elevenKey || isDemoMode) {
+                        const voiceType = isCoach ? 'coach' : 'character';
+                        showStatus(`Converting to speech (${voiceType} voice)...`, 'info');
+                        
+                        try {
+                            const audioBlob = await makeElevenLabsRequest(claudeText, isCoach);
+                            
+                            if (audioBlob) {
+                                const audioUrl = URL.createObjectURL(audioBlob);
+                                const audioPlayer = document.getElementById('audioPlayer');
+                                const audioControls = document.getElementById('audioControls');
+                                
+                                if (audioPlayer && audioControls) {
+                                    audioPlayer.src = audioUrl;
+                                    audioControls.style.display = 'flex';
+                                    audioPlayer.play().catch(console.error);
+                                    currentAudio = audioPlayer;
+                                    showStatus(`✅ Playing ${voiceType} voice!`, 'success');
+                                }
+                            }
+                        } catch (voiceError) {
+                            showStatus(`Text received! Voice synthesis failed: ${voiceError.message}`, 'error');
+                            updateStatusIndicator(document.getElementById('elevenStatus'), 'error');
+                        }
+                    } else {
+                        showStatus('✅ Response received! Add ElevenLabs key for speech.', 'success');
+                    }
+                }
+
+                document.getElementById('userInput').value = '';
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+                updateStatusIndicator(document.getElementById('claudeStatus'), 'error');
+            }
+        }
+
+        function stopAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                showStatus('Audio stopped', 'info');
+            }
+        }
+
+        function clearChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            if (chatContainer) {
+                chatContainer.innerHTML = '<p style="text-align: center; color: #666;">Start a conversation!</p>';
+            }
+            conversationHistory = [];
+            window.demoState = { step: 0, hasGreeted: false }; // Reset demo state
+            const audioControls = document.getElementById('audioControls');
+            if (audioControls) {
+                audioControls.style.display = 'none';
+            }
+            showStatus('Chat cleared - demo reset', 'info');
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const speechAvailable = initializeSpeechRecognition();
+            
+            // Demo mode toggle
+            document.getElementById('demoMode').addEventListener('change', function() {
+                isDemoMode = this.checked;
+                const apiSetup = document.getElementById('apiSetup');
+                
+                if (isDemoMode) {
+                    if (apiSetup) apiSetup.style.opacity = '0.5';
+                    showStatus('Demo mode enabled - no API keys needed', 'info');
+                    updateStatusIndicator(document.getElementById('netlifyStatus'), 'connected');
+                    updateStatusIndicator(document.getElementById('claudeStatus'), 'connected');
+                    updateStatusIndicator(document.getElementById('elevenStatus'), 'connected');
+                } else {
+                    if (apiSetup) apiSetup.style.opacity = '1';
+                    showStatus('Real API mode - enter your API keys above', 'info');
+                    updateStatusIndicator(document.getElementById('netlifyStatus'), '');
+                    updateStatusIndicator(document.getElementById('claudeStatus'), '');
+                    updateStatusIndicator(document.getElementById('elevenStatus'), '');
+                }
+            });
+
+            // Character voice selection
+            document.querySelectorAll('#characterVoices .voice-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('#characterVoices .voice-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedCharacterVoice = this.dataset.voice;
+                    showStatus(`Selected character voice: ${this.textContent}`, 'info');
+                });
+            });
+
+            // Coach voice selection
+            document.querySelectorAll('#coachVoices .voice-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('#coachVoices .voice-option').forEach(o => o.classList.remove('coach-selected'));
+                    this.classList.add('coach-selected');
+                    selectedCoachVoice = this.dataset.voice;
+                    showStatus(`Selected coach voice: ${this.textContent}`, 'info');
+                });
+            });
+
+            // Enter key handler for sending messages
+            const userInput = document.getElementById('userInput');
+            if (userInput) {
+                userInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
+
+            // Status message and HTTPS check
+            const isSecureContext = window.isSecureContext || location.protocol === 'https:';
+            if (!speechAvailable) {
+                showStatus('⚠️ Speech recognition not available. Use Chrome, Edge, or Safari.', 'error');
+                const speechBtn = document.getElementById('speechBtn');
+                if (speechBtn) speechBtn.disabled = true;
+            } else if (!isSecureContext) {
+                showStatus('⚠️ Speech recognition requires HTTPS. Netlify provides HTTPS automatically.', 'error');
+                const speechBtn = document.getElementById('speechBtn');
+                if (speechBtn) speechBtn.disabled = true;
+                const microphoneHelp = document.getElementById('microphoneHelp');
+                if (microphoneHelp) microphoneHelp.style.display = 'block';
+            } else {
+                showStatus('Ready! Netlify Functions eliminate proxy issues. 🎤 Speech ready. 🎓 Coach integrated.', 'info');
+            }
+            
+            // Initialize status indicators for demo mode
+            updateStatusIndicator(document.getElementById('netlifyStatus'), 'connected');
+            updateStatusIndicator(document.getElementById('claudeStatus'), 'connected');
+            updateStatusIndicator(document.getElementById('elevenStatus'), 'connected');
+        });
+    </script>
+</body>
+</html>
